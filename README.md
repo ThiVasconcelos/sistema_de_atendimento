@@ -21,6 +21,16 @@ UPDATE mysql.user SET hot='%' where user='root'
 flush privileges;
 
 ```
+
+###.env
+'''
+process.env.TZ = 'America/Sao_Paulo'
+PORT=3333
+MYSQL_HOST=local.host
+MYSQL_USER=root
+MYSQL_PASSWORD=root
+MYSQL_DB=atendimento
+'''
 3. Abrir o Visual Studio Code:
 
 Abra o Visual Studio Code para começar a trabalhar no backend do seu projeto.
