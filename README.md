@@ -4,6 +4,12 @@
   Construção de uma API para um sistema de atendimento
 
 ### Instruções para Configuração do Ambiente:
+#### **Requisitos:**
+NodeJS;
+Express;
+nodemon;
+Dockers;
+MySQL 8.0;
 
 1. **Instalação do Docker:**
    
