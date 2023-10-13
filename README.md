@@ -99,7 +99,7 @@ MySQL 8.0;
 
    -- Cria a tabela 'DataTemp'
    CREATE TABLE DataTemp (
-       data_atendimento TIMESTAMP AUTO_INCREMENT CURRENT_TIMESTAMP
+       data_atendimento TIMESTAMP CURRENT_TIMESTAMP
    );
 
    CREATE TABLE DisplayTemp (
@@ -130,7 +130,7 @@ MySQL 8.0;
 --- 
 
 
-## Escodo do Projeto( Sistema para Controle de Atendimento)
+## Escopo do Projeto( Sistema para Controle de Atendimento)
 
 Sistemas de **"tickets"** são ferramentas para apoio à gestão do atendimento ao usuário. Também são conhecidos como sistemas de **"chamados"**, quando tratando do atendimento de demandas no setor de TI. Essas ferramentas trabalham fornecendo um controle através do registro na fila de atendimento que, por vezes, obedece a esquemas de priorização. Este documento, elaborado após entrevista conduzida pelo Analista de Negócios e um suposto cliente, tem por objetivo apresentar os requisitos iniciais para um sistema de gestão de tickets de serviço, relatado sob a visão adaptada desse suposto cliente.
 
