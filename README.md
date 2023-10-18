@@ -1,8 +1,7 @@
 
 
-## Projeto da cadeira Sistemas Distribuídos
-  Construção de uma API para um sistema de atendimento
-
+## Projeto de Senhas de atedimento
+  Construção de uma API do zero com base no escopo do projeto da cadeira de Sitemas Distrubidos, onde consiste em um sistema de atendimento por Senhas
 ### Instruções para Configuração do Ambiente:
 #### **Requisitos:**
 NodeJS;
