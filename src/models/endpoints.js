@@ -93,7 +93,7 @@ const atendido = async () => {
         );
         let lastp = lastpResult[0] ? lastpResult[0].prioridade : null;
         let ultimasenha = lastpResult[0] ? lastpResult[0].prioridade : null;
-        //console.log('teste:',lastp)
+        console.log('teste:',lastp)
         if(lastp=== null){
             await proximo();
             const text='Nenhuma senha na foi chamada para ser atendida! A próxima senha foi chamada caso haja senhas na fila, verifique no Display';
@@ -158,6 +158,7 @@ const atendido = async () => {
         const { prioridade, data_emissao, ordem } = senhaAtendida;
         prioridade1=prioridade;
         ordem1=ordem;
+        data_emissao.setHours(data_emissao.getHours() - 3);
         data_emissao1 = data_emissao.toISOString().slice(0, 19).replace('T', ' ');
         //onsole.log('Filatemp:',prioridade1,data_emissao1,ordem1)
     const [rows, fields] = await connection.execute(
@@ -166,11 +167,12 @@ const atendido = async () => {
      //console.log('Nome:',(rows));
       //console.log('name2:',(date_now));
         if (rows.length > 0) {
-           const{ prioridade, ordem,data_emissao, guiche } = rows[0];
+           const{ prioridade, ordem,data_emissao} = rows[0];
            prioridade2=prioridade;
            ordem2=ordem;
+           data_emissao.setHours(data_emissao.getHours() - 3);
            data_emissao2=data_emissao.toISOString().slice(0, 19).replace('T', ' ');
-    //console.log('teste:',prioridade2, ordem2,data_emissao2, guiche2)
+    console.log('teste:',prioridade2, ordem2,data_emissao2, guiche)
         }
     await connection.execute(
         'UPDATE DisplayTemp JOIN (SELECT MAX(id_dpstemp) as max_id FROM DisplayTemp) AS subquery SET DisplayTemp.guiche = ? WHERE DisplayTemp.id_dpstemp = subquery.max_id',
@@ -191,8 +193,8 @@ const atendido = async () => {
       'UPDATE Senhas SET data_atendimento = ?,atendido = 1,guiche = ?,tempo_atendimento = now() WHERE prioridade = ? AND DATE(data_emissao) = DATE(?) AND ordem = ?',
       [old_date,guiche,prioridade2,data_emissao2,ordem2]  
         );
-        //console.log(lastp);
-        return ['Senha:',prioridade1,ordem1,'ordem anterior',ultimasenha]
+        console.log(old_date,guiche,prioridade2,data_emissao2,ordem2);
+    return ['Senha:',prioridade1,ordem1,'ordem anterior',ultimasenha]
 };
 const displayTemp = async () => {
     const [results] = await connection.execute(`SELECT CONCAT(DATE_FORMAT(data_emissao, "%y%m%d"),
@@ -287,8 +289,10 @@ const proximo = async () =>{
         const { prioridade, data_emissao, ordem } = senhaAtendida;
         prioridade1=prioridade;
         ordem1=ordem;
-        data_emissao1 = data_emissao.toISOString().slice(0, 19).replace('T', ' ');
-        //console.log('Filatemp:',prioridade1,data_emissao1,ordem1)
+        console.log(data_emissao)
+        data_emissao.setHours(data_emissao.getHours() - 3);
+        data_emissao1 = data_emissao.toISOString().slice(0, 19).replace('T', ' '); 
+            console.log('Filatemp:',prioridade1,data_emissao1,ordem1)
     const [rows, fields] = await connection.execute(
         'SELECT prioridade, ordem, data_emissao, guiche FROM DisplayTemp WHERE id_dpstemp = (SELECT MAX(id_dpstemp) FROM DisplayTemp)'
       );
@@ -298,6 +302,7 @@ const proximo = async () =>{
            const{ prioridade, ordem,data_emissao, guiche } = rows[0];
            prioridade2=prioridade;
            ordem2=ordem;
+           data_emissao.setHours(data_emissao.getHours() - 3);
            data_emissao2=data_emissao.toISOString().slice(0, 19).replace('T', ' ');
     //console.log('teste:',prioridade2, ordem2,data_emissao2, guiche2)       
         }
