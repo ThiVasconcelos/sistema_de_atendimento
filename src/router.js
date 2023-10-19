@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const endpointsController = require('./controllers/endpointsController');
 
-
 router.get('/Fimdia', endpointsController.truncateDia);
 router.get('/SenhaSP', endpointsController.insertSenhaSP); 
 router.get('/SenhaSE', endpointsController.insertSenhaSE);
@@ -12,5 +11,3 @@ router.get('/Display', endpointsController.displayTemp);
 router.get('/Proximo',endpointsController.proximo);
 router.get('/relatorio', endpointsController.relatorio);
 module.exports = router;
-
-
