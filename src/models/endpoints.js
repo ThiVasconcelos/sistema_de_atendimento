@@ -93,7 +93,7 @@ const atendido = async () => {
         );
         let lastp = lastpResult[0] ? lastpResult[0].prioridade : null;
         let ultimasenha = lastpResult[0] ? lastpResult[0].prioridade : null;
-        console.log('teste:',lastp)
+        //console.log('teste:',lastp)
         if(lastp=== null){
             await proximo();
             const text='Nenhuma senha na foi chamada para ser atendida! A próxima senha foi chamada caso haja senhas na fila, verifique no Display';
@@ -172,7 +172,7 @@ const atendido = async () => {
            ordem2=ordem;
            data_emissao.setHours(data_emissao.getHours() - 3);
            data_emissao2=data_emissao.toISOString().slice(0, 19).replace('T', ' ');
-    console.log('teste:',prioridade2, ordem2,data_emissao2, guiche)
+    //console.log('teste:',prioridade2, ordem2,data_emissao2, guiche)
         }
     await connection.execute(
         'UPDATE DisplayTemp JOIN (SELECT MAX(id_dpstemp) as max_id FROM DisplayTemp) AS subquery SET DisplayTemp.guiche = ? WHERE DisplayTemp.id_dpstemp = subquery.max_id',
@@ -193,7 +193,7 @@ const atendido = async () => {
       'UPDATE Senhas SET data_atendimento = ?,atendido = 1,guiche = ?,tempo_atendimento = now() WHERE prioridade = ? AND DATE(data_emissao) = DATE(?) AND ordem = ?',
       [old_date,guiche,prioridade2,data_emissao2,ordem2]  
         );
-        console.log(old_date,guiche,prioridade2,data_emissao2,ordem2);
+        //console.log(old_date,guiche,prioridade2,data_emissao2,ordem2);
     return ['Senha:',prioridade1,ordem1,'ordem anterior',ultimasenha]
 };
 const displayTemp = async () => {
@@ -289,10 +289,10 @@ const proximo = async () =>{
         const { prioridade, data_emissao, ordem } = senhaAtendida;
         prioridade1=prioridade;
         ordem1=ordem;
-        console.log(data_emissao)
+        //console.log(data_emissao)
         data_emissao.setHours(data_emissao.getHours() - 3);
         data_emissao1 = data_emissao.toISOString().slice(0, 19).replace('T', ' '); 
-            console.log('Filatemp:',prioridade1,data_emissao1,ordem1)
+            //console.log('Filatemp:',prioridade1,data_emissao1,ordem1)
     const [rows, fields] = await connection.execute(
         'SELECT prioridade, ordem, data_emissao, guiche FROM DisplayTemp WHERE id_dpstemp = (SELECT MAX(id_dpstemp) FROM DisplayTemp)'
       );
@@ -345,9 +345,10 @@ const relatorio = async (dia, mes, numeroRelatorio) => {
                 query = 'SELECT id, prioridade, data_emissao, guiche, ordem, CASE WHEN atendido = 1 THEN data_atendimento ELSE NULL END AS data_atendimento FROM Senhas WHERE DAY(data_emissao) = ? AND MONTH(data_emissao) = ?';
                 break;
             case '6':
-                query = `SELECT AVG(TIMESTAMPDIFF(MINUTE, data_atendimento, tempo_atendimento)) AS media_atendimento_minutos 
+                query = `SELECT ROUND(AVG(TIMESTAMPDIFF(SECOND, data_atendimento, tempo_atendimento)) / 60, 2) AS media_atendimento_minutos 
                 FROM Senhas 
-                WHERE atendido = 1 AND DAY(data_emissao) = ? AND MONTH(data_emissao) = ?;
+                WHERE atendido = 1 AND DAY(data_emissao) = ? AND MONTH(data_emissao) = ?
+                
                 `;
                 break;
             default:
