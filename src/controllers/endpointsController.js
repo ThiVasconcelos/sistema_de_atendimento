@@ -1,11 +1,11 @@
 const endpoints = require('../models/endpoints');
 //criar controles diferentes para cada freature cliente, relatorio e etc
 
-const getAll = async (req,res) => {
+const truncateDia = async (req,res) => {
 
-    const test = await endpoints.getAll();
-
-    return res.status(200).json(test);
+    const msg = await endpoints.truncateDia();
+    console.log(msg)
+    return res.status(200).json(msg);
 
 };
 
@@ -72,7 +72,7 @@ const relatorio = async (req, res) => {
 
 
 module.exports = {
-    getAll,
+    truncateDia,
     insertSenhaSP,
     insertSenhaSE,
     insertSenhaSG,

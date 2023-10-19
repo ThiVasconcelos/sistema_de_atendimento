@@ -1,6 +1,9 @@
 
 const connection = require('../models/connection');
 //ajustar identação
+//Delete from DisplayTemp where day(data_emissao) like day(now()); limpar lista no final do dia e painel
+//criar botão final do dia para limpar limpar senhas que ainda estão na lista e remove da tabela senhas as que estavam na fila
+//criar lógica do tempo de atendimento para chamar senhas
 
 const insertSenhaSP = async () => {
     const prioridade = 'SP';
@@ -30,7 +33,7 @@ const insertSenhaSP = async () => {
     }
     return {
         "Senhas":"Pressione para retirar sua senha de Prioridade",
-        "Senhas Prioridade(SG) emitidas":ordem };
+        "Senhas Prioridade(SP) emitidas":ordem };
 };
 
 const insertSenhaSE = async () => {
@@ -59,7 +62,7 @@ const insertSenhaSE = async () => {
     }
     return {
         "Senhas":"Pressione para retirar sua senha de Prioridade",
-        "Senhas Prioridade(SG) emitidas":ordem };
+        "Senhas Prioridade(SE) emitidas":ordem };
 };
 
 
@@ -99,6 +102,8 @@ const atendido = async () => {
     const result = await connection.execute(
         'SELECT data_atendimento FROM DataTemp'
     );
+    console.log(result)
+
     old_date=result[0][0].data_atendimento
   
     
@@ -112,55 +117,78 @@ const atendido = async () => {
         'SELECT prioridade FROM DisplayTemp WHERE id_dpstemp = (SELECT MAX(id_dpstemp) FROM DisplayTemp) AND DAY(data_emissao) = DAY(CURDATE())'
         );
        
-       //console.log(lastpResult)
+     
     
         let lastp = lastpResult[0] ? lastpResult[0].prioridade : null;
+        let ultimasenha = lastpResult[0] ? lastpResult[0].prioridade : null;
+        console.log('teste:',lastp)
+        if(lastp=== null){
+            await proximo();
+            const text='Nenhuma senha na foi chamada para ser atendida! A próxima senha foi chamada caso haja senhas na fila, verifique no Display';
+            return text;
+        };
         let count = 0;
         let senhaAtendida;
-        while (count < 3 & !senhaAtendida) {
-            if (lastp === 'SP') {
-                const [seResult] = await connection.execute(
-                    'SELECT * FROM FilaTemp WHERE prioridade = "SE" ORDER BY ordem LIMIT 1'
-                );
-                count++;
-                //console.log(seResult);
-                lastp = 'SE';
-                if (seResult.length > 0) {
-                    senhaAtendida = seResult[0];
-                } 
-            }
-        
-            if (!senhaAtendida && (lastp === 'SE' || !lastp)) {
-                const [sgResult] = await connection.execute(
-                    'SELECT * FROM FilaTemp WHERE prioridade = "SG" ORDER BY ordem LIMIT 1'
-                );
-                count++;
-                lastp = 'SG';
-                if (sgResult.length > 0) {
-                    senhaAtendida = sgResult[0];
-                } 
-            }
-        
-            if (!senhaAtendida && (lastp === 'SG' || !lastp)) {
+        while (count  <2 & !senhaAtendida) {
+            console.log('check value',lastp)
+            if (lastp=== null || lastp==='SG'){
                 const [spResult] = await connection.execute(
                     'SELECT * FROM FilaTemp WHERE prioridade = "SP" ORDER BY ordem LIMIT 1'
                 );
+                console.log('pass1')
                 count++;
-                lastp = 'SP';
-                //console.log(spResult);
+                console.log('teste length?:',spResult.length)
                 if (spResult.length > 0) {
                     senhaAtendida = spResult[0];
-                } 
+                    console.log('teste1', spResult, count);
+                    break;
+                } else{
+                    lastp='SP';
+                }
+                
+            }
+            if (!senhaAtendida && lastp === 'SP' ) {
+                const [seResult] = await connection.execute(
+                    'SELECT * FROM FilaTemp WHERE prioridade = "SE" ORDER BY ordem LIMIT 1'
+                );
+                console.log('pass2')
+                count++;
+                
+           
+                if (seResult.length > 0) {
+                    senhaAtendida = seResult[0];
+                    console.log('teste2', seResult);
+                    break;
+                }else{
+                    lastp = 'SE';
+                }
+            }
+            if (!senhaAtendida && lastp === 'SE') {
+                const [sgResult] = await connection.execute(
+                    'SELECT * FROM FilaTemp WHERE prioridade = "SG" ORDER BY ordem LIMIT 1'
+                );
+                console.log('pass3')
+                count++;
+
+                console.log(sgResult);
+                if (sgResult.length > 0) {
+                    senhaAtendida = sgResult[0];
+                    console.log('teste3', sgResult);
+                    break;
+                } else{
+                    lastp = 'SP';
+                }
                     
                 
             }
-            //console.log(count,lastp)
+            
         }
         
-  
+        
         if (!senhaAtendida) {
             
             return 'Não existem senhas na fila.';
+
         }
        
         
@@ -212,7 +240,7 @@ const atendido = async () => {
         );
         
         //console.log(lastp);
-        return ['Senha:',prioridade1,ordem1,'ordem anterior',lastp]
+        return ['Senha:',prioridade1,ordem1,'ordem anterior',ultimasenha]
 
 
 };
@@ -234,25 +262,22 @@ const displayTemp = async () => {
 
 
 
-const getAll = async () =>{
+const truncateDia = async () =>{
 
-    const result = await connection.execute(
-        'SELECT data_atendimento FROM DataTemp'
-    );
-    
-    await connection.execute('UPDATE DataTemp SET data_atendimento = now()');
-    old_date1=result[0][0].data_atendimento
-    await connection.execute('UPDATE DataTemp SET data_atendimento = ?',
-    [old_date1]);
-  return old_date1  
+    await connection.execute( `DELETE FROM Senhas
+    WHERE (prioridade, ordem, DATE(data_emissao))
+    IN (SELECT prioridade, ordem, DATE(data_emissao) FROM FilaTemp);
+    `  );
+    await connection.execute( ' TRUNCATE TABLE DataTemp'  );
+    await connection.execute( ' TRUNCATE TABLE DisplayTemp'  );
+    await connection.execute( ' TRUNCATE TABLE FilaTemp'  );
+    await connection.execute('INSERT INTO DataTemp (data_atendimento) VALUES (NOW())');
+    const result ='Dia encerrado, todas as senhas restantes foram apagadas'
+    return result  
 };
 
 const proximo = async () =>{
     const guiche = '01';
-
-    
-
-
     const [lastpResult] =await connection.execute(
             `SELECT prioridade 
             FROM DisplayTemp 
@@ -266,58 +291,67 @@ const proximo = async () =>{
       
     
         let lastp = lastpResult[0] ? lastpResult[0].prioridade : null;
+        let ultimasenha = lastpResult[0] ? lastpResult[0].prioridade : null;
         let count = 0;
         let senhaAtendida;
-        while (count  <3 & !senhaAtendida) {
-            if (lastp === null){
-                const [seResult] = await connection.execute(
-                    'SELECT * FROM FilaTemp WHERE prioridade = "SP  " ORDER BY ordem LIMIT 1'
-                );
-                count++;
-                console.log(seResult);
-                lastp = 'SE';
-                if (seResult.length > 0) {
-                    senhaAtendida = seResult[0];
-                } 
-                
-            }
-            if (lastp === 'SP') {
-                const [seResult] = await connection.execute(
-                    'SELECT * FROM FilaTemp WHERE prioridade = "SE" ORDER BY ordem LIMIT 1'
-                );
-                count++;
-                console.log(seResult);
-                lastp = 'SE';
-                if (seResult.length > 0) {
-                    senhaAtendida = seResult[0];
-                } 
-            }
-        
-            if (!senhaAtendida && (lastp === 'SE' || !lastp)) {
-                const [sgResult] = await connection.execute(
-                    'SELECT * FROM FilaTemp WHERE prioridade = "SG" ORDER BY ordem LIMIT 1'
-                );
-                count++;
-                lastp = 'SG';
-                if (sgResult.length > 0) {
-                    senhaAtendida = sgResult[0];
-                } 
-            }
-        
-            if (!senhaAtendida && (lastp === 'SG' || !lastp)) {
+        while (count  <2 & !senhaAtendida) {
+            //console.log('check value',lastp)
+            if (lastp=== null || lastp==='SG'){
                 const [spResult] = await connection.execute(
                     'SELECT * FROM FilaTemp WHERE prioridade = "SP" ORDER BY ordem LIMIT 1'
                 );
+                //console.log('pass1')
                 count++;
-                lastp = 'SP';
-                console.log(spResult);
+                //console.log('teste length?:',spResult.length)
                 if (spResult.length > 0) {
                     senhaAtendida = spResult[0];
-                } 
+                    //console.log('teste1', spResult, count);
+                    break;
+                } else{
+                    lastp='SP';
+                }
+                
+            }
+            if (!senhaAtendida && lastp === 'SP' ) {
+                const [seResult] = await connection.execute(
+                    'SELECT * FROM FilaTemp WHERE prioridade = "SE" ORDER BY ordem LIMIT 1'
+                );
+                //console.log('pass2')
+                count++;
+                
+           
+                if (seResult.length > 0) {
+                    senhaAtendida = seResult[0];
+                    //console.log('teste2', seResult);
+                    break;
+                }else{
+                    lastp = 'SE';
+                }
+            }
+            if (!senhaAtendida && lastp === 'SE') {
+                const [sgResult] = await connection.execute(
+                    'SELECT * FROM FilaTemp WHERE prioridade = "SG" ORDER BY ordem LIMIT 1'
+                );
+                //console.log('pass3')
+                count++;
+
+                //console.log(sgResult);
+                if (sgResult.length > 0) {
+                    senhaAtendida = sgResult[0];
+                    //console.log('teste3', sgResult);
+                    break;
+                } else{
+                    lastp = 'SP';
+                }
                     
                 
             }
-            console.log(count,lastp)
+            
+
+        
+
+
+            
         }
         
   
@@ -332,7 +366,7 @@ const proximo = async () =>{
         prioridade1=prioridade;
         ordem1=ordem;
         data_emissao1 = data_emissao.toISOString().slice(0, 19).replace('T', ' ');
-        console.log('Filatemp:',prioridade1,data_emissao1,ordem1)
+        //console.log('Filatemp:',prioridade1,data_emissao1,ordem1)
         
 
 
@@ -370,7 +404,7 @@ const proximo = async () =>{
     
       
         console.log(lastp);
-        return ['Senha:',prioridade1,ordem1,'ordem anterior',lastp]
+        return ['Senha:',prioridade1,ordem1,'ordem anterior',ultimasenha]
 
 }
 
@@ -398,6 +432,7 @@ const relatorio = async (dia, mes, numeroRelatorio) => {
                 FROM Senhas 
                 WHERE atendido = 1 AND DAY(data_emissao) = ? AND MONTH(data_emissao) = ?;
                 `;
+                
                 break;
             default:
                 throw new Error('Número de relatório inválido.');
@@ -413,7 +448,7 @@ const relatorio = async (dia, mes, numeroRelatorio) => {
 
 
 module.exports = {
-    getAll,
+    truncateDia,
     insertSenhaSP,
     insertSenhaSE,
     insertSenhaSG,

@@ -3,7 +3,7 @@ const router = express.Router();
 const endpointsController = require('./controllers/endpointsController');
 
 
-router.get('/test', endpointsController.getAll);
+router.get('/Fimdia', endpointsController.truncateDia);
 router.get('/SenhaSP', endpointsController.insertSenhaSP); 
 router.get('/SenhaSE', endpointsController.insertSenhaSE);
 router.get('/SenhaSG', endpointsController.insertSenhaSG); 
