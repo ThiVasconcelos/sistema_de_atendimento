@@ -123,7 +123,9 @@ MySQL 8.0;
 
    INSERT INTO Agentes (guiche, nome_agente) VALUES (01, 'Jasé Chitsu');
 
-   SET time_zone = 'America/Sao_Paulo';   
+
+   SET GLOBAL time_zone = '+00:00';
+   SET time_zone = SYSTEM;
    ```
 
 --- 
